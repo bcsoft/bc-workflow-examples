@@ -4,6 +4,7 @@
 .project
 .xml
 target
+deployment
 Thumbs.db
 *.pdb
 *.log

@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test">
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.bc.com/workflow">
   <process id="SimpleProcess" name="简易测试流程">
-    <startEvent id="startevent1" name="Start" activiti:formKey="cn/bc/workflow/examples/account/askfor/AskForAccountProcess.form">
-      <extensionElements>
-        <activiti:formProperty id="code" name="帐号" type="string"></activiti:formProperty>
-        <activiti:formProperty id="name" name="姓名" type="string"></activiti:formProperty>
-      </extensionElements>
-    </startEvent>
+    <startEvent id="startevent1" name="Start"></startEvent>
     <userTask id="usertask1" name="提出申请" activiti:assignee="dragon"></userTask>
     <endEvent id="endevent1" name="End"></endEvent>
     <userTask id="usertask2" name="审核通过" activiti:candidateGroups="chaojiguanligang"></userTask>

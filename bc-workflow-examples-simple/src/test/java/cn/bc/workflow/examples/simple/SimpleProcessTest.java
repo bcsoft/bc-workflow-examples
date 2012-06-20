@@ -2,6 +2,10 @@ package cn.bc.workflow.examples.simple;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.InputStream;
+import java.util.zip.ZipInputStream;
+
+import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
 import org.activiti.engine.runtime.ProcessInstance;
@@ -37,6 +41,9 @@ public class SimpleProcessTest {
 	@Autowired
 	@Rule
 	public ActivitiRule activitiSpringRule;
+
+	@Autowired
+	private RepositoryService repositoryService;
 
 	/**
 	 * 直接流转的测试
@@ -130,7 +137,7 @@ public class SimpleProcessTest {
 		task = taskService.createTaskQuery().taskAssignee("dragon")
 				.singleResult();
 		Assert.assertNull(task);
-		
+
 		task = taskService.createTaskQuery().taskAssignee("admin")
 				.singleResult();
 		Assert.assertNotNull(task);
@@ -170,5 +177,64 @@ public class SimpleProcessTest {
 		// 管理员完成任务(自动结束流程)
 		taskService.complete(task.getId());
 		assertEquals(0, runtimeService.createProcessInstanceQuery().count());
+	}
+
+	/**
+	 * 直接xml文件发布测试
+	 */
+	@Test
+	public void testDeployProcessByXml() throws Exception {
+		// for (org.activiti.engine.repository.Deployment d : repositoryService
+		// .createDeploymentQuery().list()) {
+		// repositoryService.deleteDeployment(d.getId());
+		// }
+		assertEquals(0, repositoryService.createDeploymentQuery()
+				.deploymentName("SimpleProcess.bpmn20.xml").count());
+
+		// 获取xml文件流
+		InputStream xmlFile = this.getClass().getResourceAsStream(
+				"/cn/bc/workflow/examples/simple/SimpleProcess.bpmn20.xml");
+		Assert.assertNotNull(xmlFile);
+
+		// 发布xml
+		org.activiti.engine.repository.Deployment d = repositoryService
+				.createDeployment().name("SimpleProcess.bpmn20.xml")
+				.addInputStream("SimpleProcess.bpmn20.xml", xmlFile).deploy();
+
+		// 验证
+		Assert.assertNotNull(d);
+		assertEquals(1, repositoryService.createDeploymentQuery()
+				.deploymentName("SimpleProcess.bpmn20.xml").count());
+
+		// 删除发布（不知为何事务不回滚，故要自己删掉）
+		repositoryService.deleteDeployment(d.getId());
+	}
+
+	/**
+	 * bar包发布测试
+	 */
+	@Test
+	public void testDeployProcessByBar() throws Exception {
+		assertEquals(0, repositoryService.createDeploymentQuery()
+				.deploymentName("SimpleProcess.bar").count());
+
+		// 获取bar包
+		InputStream barFile = this.getClass().getResourceAsStream(
+				"/cn/bc/workflow/examples/simple/SimpleProcess.bar");
+		Assert.assertNotNull(barFile);
+		ZipInputStream inputStream = new ZipInputStream(barFile);
+
+		// 发布bar
+		org.activiti.engine.repository.Deployment d = repositoryService
+				.createDeployment().name("SimpleProcess.bar")
+				.addZipInputStream(inputStream).deploy();
+
+		// 验证
+		Assert.assertNotNull(d);
+		assertEquals(1, repositoryService.createDeploymentQuery()
+				.deploymentName("SimpleProcess.bar").count());
+
+		// 删除发布（不知为何事务不回滚，故要自己删掉）
+		repositoryService.deleteDeployment(d.getId());
 	}
 }

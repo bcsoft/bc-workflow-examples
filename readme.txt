@@ -1,7 +1,5 @@
 bc平台工作流范例
-
-浏览地址： https://github.com/rongjihuang/bc-framework-process
-源码检出： git@github.com:rongjihuang/bc-framework-process.git
+https://github.com/rongjihuang/bc-workflow-examples
 
 范例流程说明：
 1) 简易测试流程 - 测试任务的流转及任务的委派

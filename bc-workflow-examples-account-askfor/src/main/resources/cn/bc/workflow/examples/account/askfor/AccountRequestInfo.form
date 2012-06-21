@@ -1,0 +1,3 @@
+<div>帐号：<input type="text" name="code" /></div>
+<div>姓名：<input type="text" name="name" /></div>
+<div>备注：<input type="text" name="description" /></div>

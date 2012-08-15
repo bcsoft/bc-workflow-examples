@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context-3.0.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop-3.0.xsd">
+ 	<context:property-placeholder location="classpath:db.properties" />
+    <!-- 数据源 -->
+	<bean id="dataSource"
+		class="org.springframework.jdbc.datasource.SimpleDriverDataSource"
+		p:driverClass="${db_driverClassName}" p:url="${db_url}"
+		p:username="${db_username}" p:password="${db_password}" />
+		
+    <!-- 事务管理 -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	<tx:annotation-driven transaction-manager="transactionManager"/>
+		
+	<!-- Activiti -->
+	<bean id="processEngineConfiguration" class="org.activiti.spring.SpringProcessEngineConfiguration">
+		<property name="dataSource" ref="dataSource" />
+		<property name="transactionManager" ref="transactionManager" />
+		<property name="jobExecutorActivate" value="false" />
+
+		<!-- activiti数据表构建策略控制：（见DbSqlSession.performSchemaOperationsProcessEngineBuild方法）
+			false - 引擎启动时检测数据库版本是否相符，不符就抛异常；
+			true - 引擎启动时升级数据表；
+			create - 引擎启动时创建表；
+			create-drop - 引擎启动时创建表、关闭时删除表；
+			drop-create - 引擎启动时先删除表再重新创建表
+		-->
+		<property name="databaseSchemaUpdate" value="false" />
+		
+		<!-- 历史的配置：
+			none-忽略所有历史归档；
+			acitivity-存档所有的流程实例和活动实例，不存档细节；
+			audit-默认，存档所有的流程实例、活动实例以及提交的表单属性，以便通过表单进行的用户交互可被追溯和查证；
+			full-这是历史归档的最高级别，因此执行时最慢，这一级别存储了所有在 audit 中存储的信息，以及其它所有可能的细节如流程变量的更新
+		-->
+		<property name="history" value="full" />
+	</bean>
+	<bean id="processEngine" class="org.activiti.spring.ProcessEngineFactoryBean">
+		<property name="processEngineConfiguration" ref="processEngineConfiguration" />
+	</bean>
+	<bean id="repositoryService" factory-bean="processEngine"
+		factory-method="getRepositoryService" />
+	<bean id="runtimeService" factory-bean="processEngine"
+		factory-method="getRuntimeService" />
+	<bean id="taskService" factory-bean="processEngine"
+		factory-method="getTaskService" />
+	<bean id="formService" factory-bean="processEngine"
+		factory-method="getFormService" />
+	<bean id="historyService" factory-bean="processEngine"
+		factory-method="getHistoryService" />
+	<bean id="managementService" factory-bean="processEngine"
+		factory-method="getManagementService" />
+	<bean id="identityService" factory-bean="processEngine"
+		factory-method="getIdentityService" />
+		
+	<!-- Activiti测试驱动 -->
+	<bean id="activitiRule" class="cn.bc.workflow.activiti.test.ActivitiRule">
+		<property name="processEngine" ref="processEngine" />
+	</bean>
+		
+	<!-- test data -->
+	<bean id="userBean" class="cn.bc.workflow.examples.transaction.UserBean">
+		<property name="runtimeService" ref="runtimeService" />
+		<property name="taskService" ref="taskService" />
+	</bean>
+</beans>

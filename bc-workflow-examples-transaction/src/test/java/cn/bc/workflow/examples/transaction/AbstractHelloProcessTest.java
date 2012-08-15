@@ -68,7 +68,7 @@ public abstract class AbstractHelloProcessTest {
 		// 执行流程
 		Info info = new Info();
 		try {
-			userBean.hello(true, false, info);
+			userBean.hello(false, false, info);
 		} catch (Exception e) {
 			Assert.assertEquals(RuntimeException.class, e.getClass());
 			logger.error("error:class=" + e.getClass() + ",msg="

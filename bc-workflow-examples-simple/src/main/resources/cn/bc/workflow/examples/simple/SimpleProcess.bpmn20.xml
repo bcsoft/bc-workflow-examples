@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.bc.com/workflow">
   <process id="SimpleProcess" name="简易测试流程">
-    <startEvent id="startevent1" name="Start"></startEvent>
+    <startEvent id="startevent1" name="Start">
+      <extensionElements>
+        <activiti:formProperty id="subject" name="标题" type="string" expression="2012"></activiti:formProperty>
+      </extensionElements>
+    </startEvent>
     <userTask id="usertask1" name="提出申请" activiti:assignee="dragon"></userTask>
     <endEvent id="endevent1" name="End"></endEvent>
     <userTask id="usertask2" name="审核通过" activiti:candidateGroups="chaojiguanligang"></userTask>
@@ -26,17 +30,11 @@
       <bpmndi:BPMNEdge bpmnElement="flow3" id="BPMNEdge_flow3">
         <omgdi:waypoint x="325" y="185"></omgdi:waypoint>
         <omgdi:waypoint x="325" y="240"></omgdi:waypoint>
-        <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="14" width="100" x="10" y="0"></omgdc:Bounds>
-        </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="flow2" id="BPMNEdge_flow2">
         <omgdi:waypoint x="172" y="75"></omgdi:waypoint>
         <omgdi:waypoint x="172" y="157"></omgdi:waypoint>
         <omgdi:waypoint x="270" y="157"></omgdi:waypoint>
-        <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="14" width="100" x="10" y="0"></omgdc:Bounds>
-        </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="flow1" id="BPMNEdge_flow1">
         <omgdi:waypoint x="55" y="47"></omgdi:waypoint>

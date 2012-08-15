@@ -15,7 +15,26 @@
 	<bean id="processEngineConfiguration" class="org.activiti.spring.SpringProcessEngineConfiguration">
 		<property name="dataSource" ref="dataSource" />
 		<property name="transactionManager" ref="transactionManager" />
-		<property name="databaseSchemaUpdate" value="true" />
+
+		<!-- activiti数据表构建策略控制：（见DbSqlSession.performSchemaOperationsProcessEngineBuild方法）
+			false - 引擎启动时检测数据库版本是否相符，不符就抛异常；
+			true - 引擎启动时升级数据表；
+			create - 引擎启动时创建表；
+			create-drop - 引擎启动时创建表、关闭时删除表；
+			drop-create - 引擎启动时先删除表再重新创建表
+		-->
+		<property name="databaseSchemaUpdate" value="false" />
+		
+		<!-- 是否使用Activiti内置的Identity管理 -->
+		<property name="dbIdentityUsed" value="false" />
+
+		<!-- 历史的配置：
+			none-忽略所有历史归档；
+			acitivity-存档所有的流程实例和活动实例，不存档细节；
+			audit-默认，存档所有的流程实例、活动实例以及提交的表单属性，以便通过表单进行的用户交互可被追溯和查证；
+			full-这是历史归档的最高级别，因此执行时最慢，这一级别存储了所有在 audit 中存储的信息，以及其它所有可能的细节如流程变量的更新
+		-->
+		<property name="history" value="full" />
 		
 		<property name="mailServerHost" value="localhost" />
 		<property name="mailServerPort" value="5025" />
@@ -45,11 +64,15 @@
             </list>  
         </property>  
 	</bean>
+	
+	<!-- 自定义Activiti的用户和用户组管理 -->
+	<bean id="customUserManager" class="cn.bc.workflow.activiti.CustomUserManager"/>
+	<bean id="customGroupManager" class="cn.bc.workflow.activiti.CustomGroupManager"/>
 
+	<!-- Activiti引擎服务 -->
 	<bean id="processEngine" class="org.activiti.spring.ProcessEngineFactoryBean">
 		<property name="processEngineConfiguration" ref="processEngineConfiguration" />
 	</bean>
-
 	<bean id="repositoryService" factory-bean="processEngine"
 		factory-method="getRepositoryService" />
 	<bean id="runtimeService" factory-bean="processEngine"
@@ -62,8 +85,11 @@
 		factory-method="getHistoryService" />
 	<bean id="managementService" factory-bean="processEngine"
 		factory-method="getManagementService" />
+	<bean id="identityService" factory-bean="processEngine"
+		factory-method="getIdentityService" />
 		
-	<bean id="activitiRule" class="org.activiti.engine.test.ActivitiRule">
-	  <property name="processEngine" ref="processEngine" />
-	</bean> 
+	<!-- Activiti测试驱动 -->
+	<bean id="activitiRule" class="cn.bc.workflow.activiti.test.ActivitiRule">
+		<property name="processEngine" ref="processEngine" />
+	</bean>
 </beans>

@@ -5,9 +5,14 @@ import static org.junit.Assert.assertEquals;
 import java.io.InputStream;
 import java.util.zip.ZipInputStream;
 
+import org.activiti.engine.FormService;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
+import org.activiti.engine.form.FormProperty;
+import org.activiti.engine.form.StartFormData;
+import org.activiti.engine.repository.DeploymentBuilder;
+import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.DelegationState;
 import org.activiti.engine.task.Task;
@@ -18,6 +23,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,11 +35,14 @@ import org.springframework.transaction.annotation.Transactional;
  * 
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@Transactional
+@Transactional(rollbackFor = { Exception.class })
 @ContextConfiguration("classpath:spring-test.xml")
 public class SimpleProcessTest {
 	@Autowired
 	private RuntimeService runtimeService;
+
+	@Autowired
+	private FormService formService;
 
 	@Autowired
 	private TaskService taskService;
@@ -50,19 +59,31 @@ public class SimpleProcessTest {
 	 */
 	@Test
 	@Deployment(resources = { "cn/bc/workflow/examples/simple/SimpleProcess.bpmn20.xml" })
+	@Rollback(true)
 	public void testDirectProcess() throws Exception {
+		String key = "SimpleProcess";
+		// 获取流程启动的表单配置数据
+		ProcessDefinition processDefinition = repositoryService
+				.createProcessDefinitionQuery().processDefinitionKey(key)
+				.latestVersion().singleResult();
+		String processDefinitionId = processDefinition.getId();
+		StartFormData StartFormData = formService
+				.getStartFormData(processDefinitionId);
+		for (FormProperty p : StartFormData.getFormProperties()) {
+			System.out.println(p.getId() + "=" + p.getValue());
+		}
+
 		// 启动流程（指定编码流程的最新版本，编码对应xml文件中process节点的id值）
-		ProcessInstance pi = runtimeService
-				.startProcessInstanceByKey("SimpleProcess");
-		// System.out.println("pi=" + ActivitiUtils.toString(pi));
+		ProcessInstance pi = runtimeService.startProcessInstanceByKey(key);
+		System.out.println("pi=" + pi.getId());
 		Assert.assertNotNull(pi);
 		Assert.assertTrue(pi.getProcessDefinitionId().startsWith(
 				"SimpleProcess:"));// ProcessDefinitionId格式为"key:版本号:实例号"
 		Assert.assertNull(pi.getBusinessKey());
 
 		// 验证"提出申请"任务
-		Task task = taskService.createTaskQuery().taskAssignee("dragon")
-				.singleResult();
+		Task task = taskService.createTaskQuery().processInstanceId(pi.getId())
+				.taskAssignee("dragon").singleResult();
 		Assert.assertNotNull(task);
 		Assert.assertEquals("usertask1", task.getTaskDefinitionKey());
 		Assert.assertEquals("提出申请", task.getName());
@@ -76,13 +97,14 @@ public class SimpleProcessTest {
 		Assert.assertNull(task.getDescription());
 
 		// 完成"提出申请"任务(自动创建"审核通过"任务)
+		taskService.setVariable(task.getId(), "test", "test");
 		taskService.complete(task.getId());
-		task = taskService.createTaskQuery().taskAssignee("dragon")
-				.singleResult();
+		task = taskService.createTaskQuery().processInstanceId(pi.getId())
+				.taskAssignee("dragon").singleResult();
 		Assert.assertNull(task);
 
 		// 验证管理岗有一条任务
-		task = taskService.createTaskQuery()
+		task = taskService.createTaskQuery().processInstanceId(pi.getId())
 				.taskCandidateGroup("chaojiguanligang").singleResult();
 		// System.out.println("task=" + ActivitiUtils.toString(task));
 		Assert.assertNotNull(task);
@@ -93,11 +115,11 @@ public class SimpleProcessTest {
 
 		// 管理员领取任务
 		taskService.claim(task.getId(), "admin");
-		task = taskService.createTaskQuery()
+		task = taskService.createTaskQuery().processInstanceId(pi.getId())
 				.taskCandidateGroup("chaojiguanligang").singleResult();
 		Assert.assertNull(task);
-		task = taskService.createTaskQuery().taskAssignee("admin")
-				.singleResult();
+		task = taskService.createTaskQuery().processInstanceId(pi.getId())
+				.taskAssignee("admin").singleResult();
 		// System.out.println("task=" + ActivitiUtils.toString(task));
 		Assert.assertNotNull(task);
 		Assert.assertEquals("usertask2", task.getTaskDefinitionKey());
@@ -107,7 +129,8 @@ public class SimpleProcessTest {
 
 		// 管理员完成任务(自动结束流程)
 		taskService.complete(task.getId());
-		assertEquals(0, runtimeService.createProcessInstanceQuery().count());
+		assertEquals(0, runtimeService.createProcessInstanceQuery()
+				.processInstanceId(pi.getId()).count());
 	}
 
 	/**
@@ -125,8 +148,8 @@ public class SimpleProcessTest {
 		Assert.assertNotNull(pi);
 
 		// 验证"提出申请"任务
-		task = taskService.createTaskQuery().taskAssignee("dragon")
-				.singleResult();
+		task = taskService.createTaskQuery().processInstanceId(pi.getId())
+				.taskAssignee("dragon").singleResult();
 		Assert.assertNotNull(task);
 		Assert.assertEquals("提出申请", task.getName());
 		Assert.assertEquals("dragon", task.getAssignee());// 处理人
@@ -134,12 +157,12 @@ public class SimpleProcessTest {
 
 		// 委派任务给admin
 		taskService.delegateTask(task.getId(), "admin");
-		task = taskService.createTaskQuery().taskAssignee("dragon")
-				.singleResult();
+		task = taskService.createTaskQuery().processInstanceId(pi.getId())
+				.taskAssignee("dragon").singleResult();
 		Assert.assertNull(task);
 
-		task = taskService.createTaskQuery().taskAssignee("admin")
-				.singleResult();
+		task = taskService.createTaskQuery().processInstanceId(pi.getId())
+				.taskAssignee("admin").singleResult();
 		Assert.assertNotNull(task);
 		Assert.assertEquals(DelegationState.PENDING, task.getDelegationState());
 		Assert.assertNull("dragon", task.getOwner());// 拥有者
@@ -147,15 +170,15 @@ public class SimpleProcessTest {
 
 		// admin完成被委派的任务(自动创建"审核通过"任务)
 		taskService.complete(task.getId());
-		task = taskService.createTaskQuery().taskAssignee("admin")
-				.singleResult();
+		task = taskService.createTaskQuery().processInstanceId(pi.getId())
+				.taskAssignee("admin").singleResult();
 		Assert.assertNull(task);
-		task = taskService.createTaskQuery().taskAssignee("dragon")
-				.singleResult();
+		task = taskService.createTaskQuery().processInstanceId(pi.getId())
+				.taskAssignee("dragon").singleResult();
 		Assert.assertNull(task);
 
 		// 验证管理岗有一条任务
-		task = taskService.createTaskQuery()
+		task = taskService.createTaskQuery().processInstanceId(pi.getId())
 				.taskCandidateGroup("chaojiguanligang").singleResult();
 		Assert.assertNotNull(task);
 		Assert.assertEquals("审核通过", task.getName());
@@ -164,11 +187,11 @@ public class SimpleProcessTest {
 
 		// 管理员领取任务
 		taskService.claim(task.getId(), "admin");
-		task = taskService.createTaskQuery()
+		task = taskService.createTaskQuery().processInstanceId(pi.getId())
 				.taskCandidateGroup("chaojiguanligang").singleResult();
 		Assert.assertNull(task);
-		task = taskService.createTaskQuery().taskAssignee("admin")
-				.singleResult();
+		task = taskService.createTaskQuery().processInstanceId(pi.getId())
+				.taskAssignee("admin").singleResult();
 		Assert.assertNotNull(task);
 		Assert.assertEquals("审核通过", task.getName());
 		Assert.assertEquals("admin", task.getAssignee());// 处理人
@@ -176,7 +199,8 @@ public class SimpleProcessTest {
 
 		// 管理员完成任务(自动结束流程)
 		taskService.complete(task.getId());
-		assertEquals(0, runtimeService.createProcessInstanceQuery().count());
+		assertEquals(0, runtimeService.createProcessInstanceQuery()
+				.processInstanceId(pi.getId()).count());
 	}
 
 	/**
@@ -188,8 +212,8 @@ public class SimpleProcessTest {
 		// .createDeploymentQuery().list()) {
 		// repositoryService.deleteDeployment(d.getId());
 		// }
-		assertEquals(0, repositoryService.createDeploymentQuery()
-				.deploymentName("SimpleProcess.bpmn20.xml").count());
+		long c = repositoryService.createDeploymentQuery()
+				.deploymentName("SimpleProcess.bpmn20.xml").count();
 
 		// 获取xml文件流
 		InputStream xmlFile = this.getClass().getResourceAsStream(
@@ -203,11 +227,47 @@ public class SimpleProcessTest {
 
 		// 验证
 		Assert.assertNotNull(d);
-		assertEquals(1, repositoryService.createDeploymentQuery()
+		assertEquals(c + 1, repositoryService.createDeploymentQuery()
 				.deploymentName("SimpleProcess.bpmn20.xml").count());
 
 		// 删除发布（不知为何事务不回滚，故要自己删掉）
 		repositoryService.deleteDeployment(d.getId());
+	}
+
+	/**
+	 * 直接xml+png文件发布测试
+	 */
+	@Test
+	public void testDeployProcessByXmlAndPng() throws Exception {
+		long c = repositoryService.createDeploymentQuery()
+				.deploymentName("SimpleProcess.bpmn20.xml").count();
+
+		// xml文件流
+		InputStream xmlFile = this.getClass().getResourceAsStream(
+				"/cn/bc/workflow/examples/simple/SimpleProcess.bpmn20.xml");
+		Assert.assertNotNull(xmlFile);
+		DeploymentBuilder db = repositoryService.createDeployment()
+				.name("SimpleProcess.bpmn20.xml")
+				.addInputStream("SimpleProcess.bpmn20.xml", xmlFile);
+
+		// png文件流
+		InputStream pngFile = this
+				.getClass()
+				.getResourceAsStream(
+						"/cn/bc/workflow/examples/simple/SimpleProcess.SimpleProcess.png");
+		Assert.assertNotNull(pngFile);
+		db.addInputStream("SimpleProcess.SimpleProcess.png", pngFile);
+
+		// 发布
+		org.activiti.engine.repository.Deployment d = db.deploy();
+
+		// 验证
+		Assert.assertNotNull(d);
+		assertEquals(c + 1, repositoryService.createDeploymentQuery()
+				.deploymentName("SimpleProcess.bpmn20.xml").count());
+
+		// 删除发布（不知为何事务不回滚，故要自己删掉）
+		// repositoryService.deleteDeployment(d.getId());
 	}
 
 	/**

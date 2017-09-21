@@ -4,9 +4,10 @@
 	<parent>
 		<groupId>cn.bc.workflow</groupId>
 		<artifactId>bc-workflow-parent</artifactId>
-		<version>1.0-SNAPSHOT</version>
-		<relativePath>../../bc-workflow/bc-workflow-parent/pom.xml</relativePath>
+		<version>3.2-SNAPSHOT</version>
+		<relativePath/>
 	</parent>
+	<version>1.0-SNAPSHOT</version>
 	<groupId>cn.bc.workflow.examples</groupId>
 	<artifactId>bc-workflow-examples-parent</artifactId>
 	<packaging>pom</packaging>
@@ -15,8 +16,8 @@
 
 	<properties>
 		<!-- 平台版本号 -->
-		<framework.version>1.0-SNAPSHOT</framework.version>
-		<workflow.version>1.0-SNAPSHOT</workflow.version>
+		<framework.version>3.2-SNAPSHOT</framework.version>
+		<workflow.version>3.2-SNAPSHOT</workflow.version>
 
 		<app.name>bcsystem</app.name>
 		<app.debug>true</app.debug>

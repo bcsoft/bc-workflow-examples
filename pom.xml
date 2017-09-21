@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>cn.bc.workflow.examples</groupId>
 		<artifactId>bc-workflow-examples-parent</artifactId>
-		<version>0.2-SNAPSHOT</version>
+		<version>1.0-SNAPSHOT</version>
 		<relativePath>bc-workflow-parent/pom.xml</relativePath>
 	</parent>
 	<artifactId>bc-workflow-examples</artifactId>

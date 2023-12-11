@@ -16,8 +16,8 @@
 
 	<properties>
 		<!-- 平台版本号 -->
-		<framework.version>3.2-SNAPSHOT</framework.version>
-		<workflow.version>3.2-SNAPSHOT</workflow.version>
+		<framework.version>4.5-SNAPSHOT</framework.version>
+		<workflow.version>4.5-SNAPSHOT</workflow.version>
 
 		<app.name>bcsystem</app.name>
 		<app.debug>true</app.debug>
